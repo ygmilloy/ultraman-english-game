@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>Word Flashcards</title>
+
+    <style>
+        body {
+            font-family: Arial;
+            text-align: center;
+            background: #f5f5f5;
+            margin-top: 20px;
+        }
+
+        h1 {
+            font-size: 36px;
+        }
+
+        .grade-btn {
+            font-size: 22px;
+            padding: 12px 18px;
+            margin: 6px;
+            border-radius: 12px;
+            border: none;
+            color: white;
+            cursor: pointer;
+        }
+
+        .k {
+            background: #e91e63;
+        }
+
+        .g1 {
+            background: #2196f3;
+        }
+
+        .g2 {
+            background: #ff5722;
+        }
+
+        #card {
+            background: white;
+            width: 320px;
+            margin: 20px auto;
+            padding: 40px;
+            border-radius: 20px;
+            font-size: 36px;
+            cursor: pointer;
+        }
+
+        button.action {
+            font-size: 20px;
+            padding: 10px 16px;
+            margin: 6px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+
+        .correct {
+            background: #4CAF50;
+            color: white;
+        }
+
+        .wrong {
+            background: #f44336;
+            color: white;
+        }
+
+        .speak {
+            background: #ff9800;
+            color: white;
+        }
+
+        #stats {
+            margin-top: 10px;
+        }
+
+        #mode {
+            margin-top: 10px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>📚 Flashcards</h1>
+
+    <div>
+        <button class="grade-btn k" onclick="setGrade('k')">🧸</button>
+        <button class="grade-btn g1" onclick="setGrade('g1')">🚗</button>
+        <button class="grade-btn g2" onclick="setGrade('g2')">🦸</button>
+    </div>
+
+    <div id="mode"></div>
+
+    <div id="card" onclick="flip()">準備開始</div>
+
+    <div>
+        <button class="action speak" onclick="speakCurrent()">🔊</button>
+        <button class="action correct" onclick="mark(true)">會</button>
+        <button class="action wrong" onclick="mark(false)">不會</button>
+    </div>
+
+    <div id="stats"></div>
+
+    <script>
+
+        const WEEKLY_DAY = 0; // Sunday
+
+        const data = {
+
+            k: [
+                { zh: "一", en: "one" }, { zh: "二", en: "two" }, { zh: "三", en: "three" },
+                { zh: "四", en: "four" }, { zh: "五", en: "five" }, { zh: "六", en: "six" },
+                { zh: "七", en: "seven" }, { zh: "八", en: "eight" }, { zh: "九", en: "nine" },
+                { zh: "十", en: "ten" },
+
+                { zh: "狗", en: "dog" }, { zh: "貓", en: "cat" }, { zh: "鴨子", en: "duck" },
+                { zh: "魚", en: "fish" }, { zh: "青蛙", en: "frog" }, { zh: "兔子", en: "rabbit" },
+                { zh: "松鼠", en: "squirrel" }, { zh: "老虎", en: "tiger" },
+                { zh: "獅子", en: "lion" }, { zh: "猴子", en: "monkey" },
+                { zh: "大象", en: "elephant" }, { zh: "豬", en: "pig" },
+                { zh: "乳牛", en: "cow" }, { zh: "山羊", en: "goat" },
+
+                { zh: "蘋果", en: "apple" }, { zh: "柳丁", en: "orange" },
+                { zh: "香蕉", en: "banana" }, { zh: "餅乾", en: "cookie" },
+                { zh: "漢堡", en: "hamburger" }, { zh: "雞蛋", en: "egg" },
+                { zh: "檸檬", en: "lemon" }, { zh: "葡萄", en: "grapes" },
+                { zh: "紅蘿蔔", en: "carrot" },
+
+                { zh: "鉛筆", en: "pencil" }, { zh: "書", en: "book" },
+                { zh: "蠟筆", en: "crayon" }, { zh: "筆", en: "pen" },
+                { zh: "雨傘", en: "umbrella" }, { zh: "湯匙", en: "spoon" },
+                { zh: "機器人", en: "robot" }, { zh: "洋娃娃", en: "doll" },
+                { zh: "叉子", en: "fork" }, { zh: "尺", en: "ruler" },
+                { zh: "鉛筆盒", en: "pencil box" }, { zh: "橡皮擦", en: "eraser" },
+                { zh: "袋子", en: "bag" }
+            ],
+
+            g1: [
+                { zh: "爸爸", en: "father" }, { zh: "媽媽", en: "mother" },
+                { zh: "兄弟", en: "brother" }, { zh: "姐妹", en: "sister" },
+                { zh: "紅色", en: "red" }, { zh: "黃色", en: "yellow" },
+                { zh: "綠色", en: "green" }, { zh: "藍色", en: "blue" },
+                { zh: "桌子", en: "table" }, { zh: "書桌", en: "desk" },
+                { zh: "椅子", en: "chair" }, { zh: "什麼", en: "what" }
+            ],
+
+            g2: [
+                { zh: "十一", en: "eleven" }, { zh: "十二", en: "twelve" },
+                { zh: "十三", en: "thirteen" }, { zh: "十四", en: "fourteen" },
+                { zh: "十五", en: "fifteen" }, { zh: "二十", en: "twenty" },
+
+                { zh: "眼睛", en: "eye" }, { zh: "鼻子", en: "nose" },
+                { zh: "嘴巴", en: "mouth" }, { zh: "耳朵", en: "ear" },
+
+                { zh: "在上面", en: "on" }, { zh: "在下面", en: "under" },
+                { zh: "在裡面", en: "in" }
+            ]
+
+        };
+
+        let words = [], index = 0, show = false, correct = 0, total = 0, grade = "k";
+
+        function today() { return new Date().toISOString().slice(0, 10); }
+
+        function wrongKey(w) { return "w_" + w.en; }
+
+        function getWrong() {
+            let arr = [];
+            let d1 = new Date(); d1.setDate(d1.getDate() - 1);
+            let d2 = new Date(); d2.setDate(d2.getDate() - 2);
+
+            [d1, d2].forEach(d => {
+                let key = "wrong_" + d.toISOString().slice(0, 10);
+                let list = JSON.parse(localStorage.getItem(key) || "[]");
+                arr = arr.concat(list);
+            });
+            return arr;
+        }
+
+        function weekly() {
+            let arr = [];
+            Object.keys(localStorage).forEach(k => {
+                if (k.startsWith("wrong_")) {
+                    arr = arr.concat(JSON.parse(localStorage.getItem(k)));
+                }
+            });
+            return arr;
+        }
+
+        function setGrade(g) {
+            grade = g;
+            start();
+        }
+
+        function start() {
+            let base = [...data[grade]];
+            let extra = [];
+
+            if (new Date().getDay() == WEEKLY_DAY) {
+                extra = weekly();
+                document.getElementById("mode").innerText = "📅 每週複習";
+            } else {
+                extra = getWrong();
+                document.getElementById("mode").innerText = "📘 今日練習";
+            }
+
+            words = base.concat(extra);
+
+            words = words.slice(0, 15); // 限制題數
+
+            index = 0; correct = 0; total = 0;
+            next();
+        }
+
+        function next() {
+            if (index >= words.length) {
+                document.getElementById("card").innerText = "🎉 完成";
+                return;
+            }
+            show = false;
+            document.getElementById("card").innerText = words[index].zh;
+        }
+
+        function flip() {
+            if (index >= words.length) return;
+            show = !show;
+            document.getElementById("card").innerText = show ? words[index].en : words[index].zh;
+            if (show) speak(words[index].en);
+        }
+
+        function speak(t) {
+            let u = new SpeechSynthesisUtterance(t);
+            u.rate = 0.8;
+            speechSynthesis.speak(u);
+        }
+
+        function speakCurrent() {
+            if (index < words.length) speak(words[index].en);
+        }
+
+        function mark(ok) {
+            let w = words[index];
+
+            if (!ok) {
+                let key = "wrong_" + today();
+                let arr = JSON.parse(localStorage.getItem(key) || "[]");
+                arr.push(w);
+                localStorage.setItem(key, JSON.stringify(arr));
+            } else {
+                correct++;
+            }
+
+            total++;
+            document.getElementById("stats").innerText = `${correct}/${total}`;
+
+            index++;
+            next();
+        }
+
+        start();
+    </script>
+
+</body>
+
+</html>

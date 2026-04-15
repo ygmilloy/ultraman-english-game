@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>Ultraman English Game</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin-top: 30px;
+            background-color: #f5f5f5;
+        }
+
+        h1 {
+            font-size: 52px;
+            margin-bottom: 20px;
+        }
+
+        .top-bar {
+            margin-bottom: 20px;
+        }
+
+        select {
+            font-size: 20px;
+            padding: 8px 12px;
+            border-radius: 10px;
+        }
+
+        #game {
+            background: white;
+            padding: 40px 30px;
+            border-radius: 24px;
+            width: 460px;
+            margin: auto;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+        }
+
+        #level {
+            font-size: 34px;
+            margin-bottom: 20px;
+        }
+
+        #text {
+            font-size: 28px;
+            margin: 18px 0;
+            min-height: 40px;
+        }
+
+        #task {
+            font-size: 28px;
+            margin: 18px 0 28px;
+            min-height: 40px;
+        }
+
+        button {
+            font-size: 24px;
+            padding: 14px 24px;
+            margin: 10px;
+            border-radius: 14px;
+            border: none;
+            cursor: pointer;
+        }
+
+        .ok-btn {
+            background-color: #4CAF50;
+            color: white;
+            min-width: 120px;
+        }
+
+        .choice-btn {
+            background-color: #2196F3;
+            color: white;
+            min-width: 140px;
+        }
+
+        .speak-btn {
+            background-color: #ff9800;
+            color: white;
+            min-width: 140px;
+        }
+
+        .nextday-btn {
+            background-color: #9c27b0;
+            color: white;
+            min-width: 180px;
+        }
+
+        #stars {
+            margin-top: 24px;
+            font-size: 30px;
+        }
+
+        #choices {
+            margin-top: 8px;
+        }
+
+        #message {
+            font-size: 24px;
+            margin-top: 18px;
+            min-height: 36px;
+            color: #444;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>🦸 Ultraman English Game</h1>
+
+    <div class="top-bar">
+        <label for="daySelect" style="font-size:22px;">Day:</label>
+        <select id="daySelect" onchange="changeDay()">
+            <option value="1">Day 1 - Hello Hero</option>
+            <option value="2">Day 2 - Action Day</option>
+            <option value="3">Day 3 - Monster Day</option>
+            <option value="4">Day 4 - Car Day</option>
+            <option value="5">Day 5 - Color Mission</option>
+            <option value="6">Day 6 - Ultraman Rescue</option>
+            <option value="7">Day 7 - Boss Battle</option>
+        </select>
+    </div>
+
+    <div id="game">
+        <h2 id="level">Level 1</h2>
+        <p id="text">Hello, hero!</p>
+        <p id="task">Say: Hello!</p>
+
+        <div>
+            <button class="ok-btn" id="okBtn" onclick="nextStep()">OK</button>
+            <button class="speak-btn" onclick="speakCurrent()">🔊 Speak</button>
+        </div>
+
+        <div id="choices">
+            <button class="choice-btn" id="choice1" onclick="choose(1)">Choice 1</button>
+            <button class="choice-btn" id="choice2" onclick="choose(2)">Choice 2</button>
+        </div>
+
+        <div>
+            <button class="nextday-btn" onclick="nextDay()">➡ Next Day</button>
+        </div>
+
+        <p id="stars">⭐ Stars: 0</p>
+        <p id="message"></p>
+    </div>
+
+    <script>
+        let currentDay = 1;
+        let currentStep = 0;
+        let stars = 0;
+
+        const gameData = {
+            1: [
+                { type: "ok", text: "Hello, hero!", task: "Say: Hello!" },
+                { type: "ok", text: "Mission time!", task: "Touch something red." },
+                { type: "choice", text: "Choose one!", task: "Car or robot?", options: ["Car", "Robot"], correct: 1 },
+                { type: "ok", text: "Good job!", task: "Say: Go!" },
+                { type: "end", text: "Day 1 clear!", task: "Great job!" }
+            ],
+            2: [
+                { type: "ok", text: "Action day!", task: "Jump 3 times." },
+                { type: "ok", text: "Hero move!", task: "Touch your head." },
+                { type: "choice", text: "Choose one!", task: "Run or walk?", options: ["Run", "Walk"], correct: 1 },
+                { type: "choice", text: "Speed time!", task: "Fast or slow?", options: ["Fast", "Slow"], correct: 1 },
+                { type: "end", text: "Day 2 clear!", task: "You are strong!" }
+            ],
+            3: [
+                { type: "ok", text: "Monster alert!", task: "A monster is here!" },
+                { type: "choice", text: "Choose one!", task: "Big or small?", options: ["Big", "Small"], correct: 1 },
+                { type: "choice", text: "What will you do?", task: "Run or fight?", options: ["Run", "Fight"], correct: 2 },
+                { type: "ok", text: "Hero mission!", task: "Touch something blue." },
+                { type: "end", text: "Day 3 clear!", task: "Save the city!" }
+            ],
+            4: [
+                { type: "ok", text: "Car day!", task: "A red car is here." },
+                { type: "choice", text: "Choose one!", task: "Car or bus?", options: ["Car", "Bus"], correct: 1 },
+                { type: "choice", text: "Speed time!", task: "Fast or slow?", options: ["Fast", "Slow"], correct: 1 },
+                { type: "ok", text: "Find it!", task: "Find something black." },
+                { type: "end", text: "Day 4 clear!", task: "Go, car!" }
+            ],
+            5: [
+                { type: "ok", text: "Color mission!", task: "Touch something yellow." },
+                { type: "choice", text: "Choose one!", task: "Red or blue?", options: ["Red", "Blue"], correct: 1 },
+                { type: "choice", text: "Choose one!", task: "Green or black?", options: ["Green", "Black"], correct: 1 },
+                { type: "ok", text: "Find it!", task: "Find something white." },
+                { type: "end", text: "Day 5 clear!", task: "Color hero!" }
+            ],
+            6: [
+                { type: "ok", text: "Rescue mission!", task: "Say: I am a hero!" },
+                { type: "ok", text: "Move now!", task: "Jump and say hello!" },
+                { type: "choice", text: "Choose one!", task: "Car or robot?", options: ["Car", "Robot"], correct: 2 },
+                { type: "ok", text: "Big mission!", task: "Save the boy!" },
+                { type: "end", text: "Day 6 clear!", task: "Mission clear!" }
+            ],
+            7: [
+                { type: "ok", text: "Boss battle!", task: "Monster attack!" },
+                { type: "choice", text: "Choose one!", task: "Run or fight?", options: ["Run", "Fight"], correct: 2 },
+                { type: "ok", text: "Final mission!", task: "Touch something red." },
+                { type: "ok", text: "Hero voice!", task: "Say: I am Ultraman!" },
+                { type: "end", text: "Day 7 clear!", task: "Final victory!" }
+            ]
+        };
+
+        function speak(text) {
+            window.speechSynthesis.cancel();
+
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = "en-US";
+            utterance.rate = 0.8;
+            utterance.pitch = 1.0;
+            utterance.volume = 1.0;
+
+            const voices = window.speechSynthesis.getVoices();
+            const preferredVoice =
+                voices.find(v => v.lang === "en-US" && /Samantha|Karen|Moira|Ava|Jenny|Female/i.test(v.name)) ||
+                voices.find(v => v.lang === "en-US") ||
+                voices[0];
+
+            if (preferredVoice) {
+                utterance.voice = preferredVoice;
+            }
+
+            window.speechSynthesis.speak(utterance);
+        }
+
+        function speakCurrent() {
+            const step = gameData[currentDay][currentStep];
+            if (!step) return;
+            speak(step.text + " " + step.task);
+        }
+
+        function render() {
+            const step = gameData[currentDay][currentStep];
+            if (!step) return;
+
+            document.getElementById("level").innerText = `Day ${currentDay} - Level ${currentStep + 1}`;
+            document.getElementById("text").innerText = step.text;
+            document.getElementById("task").innerText = step.task;
+            document.getElementById("stars").innerText = `⭐ Stars: ${stars}`;
+            document.getElementById("message").innerText = "";
+
+            const okBtn = document.getElementById("okBtn");
+            const choice1 = document.getElementById("choice1");
+            const choice2 = document.getElementById("choice2");
+            const choicesDiv = document.getElementById("choices");
+
+            if (step.type === "ok") {
+                okBtn.style.display = "inline-block";
+                choicesDiv.style.display = "none";
+            } else if (step.type === "choice") {
+                okBtn.style.display = "none";
+                choicesDiv.style.display = "block";
+                choice1.innerText = step.options[0];
+                choice2.innerText = step.options[1];
+            } else if (step.type === "end") {
+                okBtn.style.display = "inline-block";
+                okBtn.innerText = "Finish";
+                choicesDiv.style.display = "none";
+            }
+
+            if (step.type !== "end") {
+                okBtn.innerText = "OK";
+            }
+
+            speakCurrent();
+        }
+
+        function nextStep() {
+            const step = gameData[currentDay][currentStep];
+
+            if (step.type === "ok") {
+                stars += 1;
+                document.getElementById("message").innerText = "🎉 Level Clear!";
+                currentStep += 1;
+            } else if (step.type === "end") {
+                stars += 1;
+                document.getElementById("message").innerText = "🏆 Day Complete!";
+                return;
+            }
+
+            setTimeout(render, 500);
+        }
+
+        function choose(n) {
+            const step = gameData[currentDay][currentStep];
+            if (step.type !== "choice") return;
+
+            if (n === step.correct) {
+                stars += 2;
+                document.getElementById("message").innerText = "✅ Great choice!";
+            } else {
+                stars += 1;
+                document.getElementById("message").innerText = "🙂 Nice try!";
+            }
+
+            currentStep += 1;
+            setTimeout(render, 500);
+        }
+
+        function changeDay() {
+            currentDay = Number(document.getElementById("daySelect").value);
+            currentStep = 0;
+            stars = 0;
+            render();
+        }
+
+        function nextDay() {
+            if (currentDay < 7) {
+                currentDay += 1;
+                document.getElementById("daySelect").value = String(currentDay);
+                currentStep = 0;
+                stars = 0;
+                render();
+            }
+        }
+
+        window.speechSynthesis.onvoiceschanged = () => {
+            render();
+        };
+
+        window.onload = () => {
+            render();
+        };
+    </script>
+</body>
+
+</html>

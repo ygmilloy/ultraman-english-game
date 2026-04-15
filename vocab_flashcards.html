@@ -1,269 +1,488 @@
 <!DOCTYPE html>
 <html>
-
 <head>
-    <meta charset="UTF-8">
-    <title>Word Flashcards</title>
+<meta charset="UTF-8">
+<title>Word Flashcards</title>
 
-    <style>
-        body {
-            font-family: Arial;
-            text-align: center;
-            background: #f5f5f5;
-            margin-top: 20px;
-        }
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    text-align: center;
+    background: #f5f5f5;
+    margin: 0;
+    padding: 20px 16px 40px;
+  }
 
-        h1 {
-            font-size: 36px;
-        }
+  h1 {
+    font-size: 36px;
+    margin: 10px 0 16px;
+  }
 
-        .grade-btn {
-            font-size: 22px;
-            padding: 12px 18px;
-            margin: 6px;
-            border-radius: 12px;
-            border: none;
-            color: white;
-            cursor: pointer;
-        }
+  .grade-btn {
+    font-size: 22px;
+    padding: 12px 18px;
+    margin: 6px;
+    border-radius: 12px;
+    border: none;
+    color: white;
+    cursor: pointer;
+  }
 
-        .k {
-            background: #e91e63;
-        }
+  .k { background:#e91e63; }
+  .g1 { background:#2196f3; }
+  .g2 { background:#ff5722; }
 
-        .g1 {
-            background: #2196f3;
-        }
+  #mode, #direction, #stats, #message {
+    margin: 10px 0;
+    font-size: 20px;
+  }
 
-        .g2 {
-            background: #ff5722;
-        }
+  #mode {
+    font-weight: bold;
+  }
 
-        #card {
-            background: white;
-            width: 320px;
-            margin: 20px auto;
-            padding: 40px;
-            border-radius: 20px;
-            font-size: 36px;
-            cursor: pointer;
-        }
+  #card {
+    background: white;
+    width: 360px;
+    max-width: calc(100vw - 40px);
+    margin: 20px auto;
+    padding: 40px 24px;
+    border-radius: 20px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.10);
+    min-height: 180px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+  }
 
-        button.action {
-            font-size: 20px;
-            padding: 10px 16px;
-            margin: 6px;
-            border: none;
-            border-radius: 10px;
-            cursor: pointer;
-        }
+  #word {
+    font-size: 38px;
+    line-height: 1.4;
+    word-break: break-word;
+  }
 
-        .correct {
-            background: #4CAF50;
-            color: white;
-        }
+  button.action {
+    font-size: 20px;
+    padding: 10px 16px;
+    margin: 6px;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+  }
 
-        .wrong {
-            background: #f44336;
-            color: white;
-        }
+  .correct { background:#4CAF50; color:white; }
+  .wrong { background:#f44336; color:white; }
+  .speak { background:#ff9800; color:white; }
+  .review { background:#9c27b0; color:white; }
+  .small { background:#607d8b; color:white; }
 
-        .speak {
-            background: #ff9800;
-            color: white;
-        }
-
-        #stats {
-            margin-top: 10px;
-        }
-
-        #mode {
-            margin-top: 10px;
-        }
-    </style>
+  .hint {
+    color: #666;
+    font-size: 15px;
+    margin-top: 8px;
+  }
+</style>
 </head>
 
 <body>
 
-    <h1>📚 Flashcards</h1>
+<h1>📚 Word Flashcards</h1>
 
-    <div>
-        <button class="grade-btn k" onclick="setGrade('k')">🧸</button>
-        <button class="grade-btn g1" onclick="setGrade('g1')">🚗</button>
-        <button class="grade-btn g2" onclick="setGrade('g2')">🦸</button>
-    </div>
+<div>
+  <button class="grade-btn k" onclick="setGrade('k')">🧸 幼兒園</button>
+  <button class="grade-btn g1" onclick="setGrade('g1')">🚗 一年級</button>
+  <button class="grade-btn g2" onclick="setGrade('g2')">🦸 二年級</button>
+</div>
 
-    <div id="mode"></div>
+<div id="mode">今日模式：一般練習</div>
+<div id="direction">題目方向：</div>
 
-    <div id="card" onclick="flip()">準備開始</div>
+<div id="card" onclick="flip()">
+  <div id="word">準備開始</div>
+</div>
 
-    <div>
-        <button class="action speak" onclick="speakCurrent()">🔊</button>
-        <button class="action correct" onclick="mark(true)">會</button>
-        <button class="action wrong" onclick="mark(false)">不會</button>
-    </div>
+<div>
+  <button class="action speak" onclick="speakCurrent()">🔊 發音</button>
+  <button class="action correct" onclick="mark(true)">✅ 會</button>
+  <button class="action wrong" onclick="mark(false)">❌ 不會</button>
+</div>
 
-    <div id="stats"></div>
+<div>
+  <button class="action review" onclick="startTodayWrongReview()">今日錯字複習</button>
+  <button class="action small" onclick="start()">重新開始</button>
+</div>
 
-    <script>
+<div id="stats"></div>
+<div id="message"></div>
+<div class="hint">點卡片可翻面；今天做錯的字，可按「今日錯字複習」再練一次。</div>
 
-        const WEEKLY_DAY = 0; // Sunday
+<script>
+const WEEKLY_DAY = 0;     // 0 = Sunday
+const DAILY_LIMIT = 20;
 
-        const data = {
+const data = {
+  k: [
+    {zh:"一",en:"one"},{zh:"二",en:"two"},{zh:"三",en:"three"},
+    {zh:"四",en:"four"},{zh:"五",en:"five"},{zh:"六",en:"six"},
+    {zh:"七",en:"seven"},{zh:"八",en:"eight"},{zh:"九",en:"nine"},
+    {zh:"十",en:"ten"},
 
-            k: [
-                { zh: "一", en: "one" }, { zh: "二", en: "two" }, { zh: "三", en: "three" },
-                { zh: "四", en: "four" }, { zh: "五", en: "five" }, { zh: "六", en: "six" },
-                { zh: "七", en: "seven" }, { zh: "八", en: "eight" }, { zh: "九", en: "nine" },
-                { zh: "十", en: "ten" },
+    {zh:"狗",en:"dog"},{zh:"貓",en:"cat"},{zh:"鴨子",en:"duck"},
+    {zh:"魚",en:"fish"},{zh:"青蛙",en:"frog"},{zh:"兔子",en:"rabbit"},
+    {zh:"松鼠",en:"squirrel"},{zh:"老虎",en:"tiger"},{zh:"獅子",en:"lion"},
+    {zh:"猴子",en:"monkey"},{zh:"大象",en:"elephant"},{zh:"豬",en:"pig"},
+    {zh:"乳牛",en:"cow"},{zh:"山羊",en:"goat"},
 
-                { zh: "狗", en: "dog" }, { zh: "貓", en: "cat" }, { zh: "鴨子", en: "duck" },
-                { zh: "魚", en: "fish" }, { zh: "青蛙", en: "frog" }, { zh: "兔子", en: "rabbit" },
-                { zh: "松鼠", en: "squirrel" }, { zh: "老虎", en: "tiger" },
-                { zh: "獅子", en: "lion" }, { zh: "猴子", en: "monkey" },
-                { zh: "大象", en: "elephant" }, { zh: "豬", en: "pig" },
-                { zh: "乳牛", en: "cow" }, { zh: "山羊", en: "goat" },
+    {zh:"蘋果",en:"apple"},{zh:"柳丁",en:"orange"},{zh:"香蕉",en:"banana"},
+    {zh:"餅乾",en:"cookie"},{zh:"漢堡",en:"hamburger"},{zh:"雞蛋",en:"egg"},
+    {zh:"檸檬",en:"lemon"},{zh:"葡萄",en:"grapes"},{zh:"紅蘿蔔",en:"carrot"},
 
-                { zh: "蘋果", en: "apple" }, { zh: "柳丁", en: "orange" },
-                { zh: "香蕉", en: "banana" }, { zh: "餅乾", en: "cookie" },
-                { zh: "漢堡", en: "hamburger" }, { zh: "雞蛋", en: "egg" },
-                { zh: "檸檬", en: "lemon" }, { zh: "葡萄", en: "grapes" },
-                { zh: "紅蘿蔔", en: "carrot" },
+    {zh:"鉛筆",en:"pencil"},{zh:"書",en:"book"},{zh:"蠟筆",en:"crayon"},
+    {zh:"筆",en:"pen"},{zh:"雨傘",en:"umbrella"},{zh:"湯匙",en:"spoon"},
+    {zh:"機器人",en:"robot"},{zh:"洋娃娃",en:"doll"},{zh:"叉子",en:"fork"},
+    {zh:"尺",en:"ruler"},{zh:"鉛筆盒",en:"pencil box"},{zh:"橡皮擦",en:"eraser"},
+    {zh:"袋子",en:"bag"},
 
-                { zh: "鉛筆", en: "pencil" }, { zh: "書", en: "book" },
-                { zh: "蠟筆", en: "crayon" }, { zh: "筆", en: "pen" },
-                { zh: "雨傘", en: "umbrella" }, { zh: "湯匙", en: "spoon" },
-                { zh: "機器人", en: "robot" }, { zh: "洋娃娃", en: "doll" },
-                { zh: "叉子", en: "fork" }, { zh: "尺", en: "ruler" },
-                { zh: "鉛筆盒", en: "pencil box" }, { zh: "橡皮擦", en: "eraser" },
-                { zh: "袋子", en: "bag" }
-            ],
+    {zh:"是",en:"is / are / am"},{zh:"它",en:"it"},{zh:"這",en:"this"},
+    {zh:"那",en:"that"},{zh:"有",en:"there is / are"},
+    {zh:"我的",en:"my"},{zh:"你的",en:"your"},
+    {zh:"他的",en:"his"},{zh:"她的",en:"her"},
+    {zh:"一個",en:"a / an"}
+  ],
 
-            g1: [
-                { zh: "爸爸", en: "father" }, { zh: "媽媽", en: "mother" },
-                { zh: "兄弟", en: "brother" }, { zh: "姐妹", en: "sister" },
-                { zh: "紅色", en: "red" }, { zh: "黃色", en: "yellow" },
-                { zh: "綠色", en: "green" }, { zh: "藍色", en: "blue" },
-                { zh: "桌子", en: "table" }, { zh: "書桌", en: "desk" },
-                { zh: "椅子", en: "chair" }, { zh: "什麼", en: "what" }
-            ],
+  g1: [
+    {zh:"一",en:"one"},{zh:"二",en:"two"},{zh:"三",en:"three"},
+    {zh:"四",en:"four"},{zh:"五",en:"five"},{zh:"六",en:"six"},
+    {zh:"七",en:"seven"},{zh:"八",en:"eight"},{zh:"九",en:"nine"},
+    {zh:"十",en:"ten"},
 
-            g2: [
-                { zh: "十一", en: "eleven" }, { zh: "十二", en: "twelve" },
-                { zh: "十三", en: "thirteen" }, { zh: "十四", en: "fourteen" },
-                { zh: "十五", en: "fifteen" }, { zh: "二十", en: "twenty" },
+    {zh:"烏龜",en:"turtle"},{zh:"狗",en:"dog"},{zh:"貓",en:"cat"},
+    {zh:"鴨子",en:"duck"},{zh:"魚",en:"fish"},{zh:"青蛙",en:"frog"},
+    {zh:"兔子",en:"rabbit"},{zh:"松鼠",en:"squirrel"},{zh:"老虎",en:"tiger"},
+    {zh:"獅子",en:"lion"},{zh:"猴子",en:"monkey"},{zh:"大象",en:"elephant"},
+    {zh:"豬",en:"pig"},{zh:"乳牛",en:"cow"},{zh:"山羊",en:"goat"},
 
-                { zh: "眼睛", en: "eye" }, { zh: "鼻子", en: "nose" },
-                { zh: "嘴巴", en: "mouth" }, { zh: "耳朵", en: "ear" },
+    {zh:"葡萄",en:"grapes"},{zh:"蘋果",en:"apple"},{zh:"柳丁",en:"orange"},
+    {zh:"香蕉",en:"banana"},{zh:"餅乾",en:"cookie"},{zh:"紅蘿蔔",en:"carrot"},
+    {zh:"雞蛋",en:"egg"},{zh:"檸檬",en:"lemon"},{zh:"火車",en:"train"},
+    {zh:"花瓶",en:"vase"},
 
-                { zh: "在上面", en: "on" }, { zh: "在下面", en: "under" },
-                { zh: "在裡面", en: "in" }
-            ]
+    {zh:"鉛筆",en:"pencil"},{zh:"書",en:"book"},{zh:"蠟筆",en:"crayon"},
+    {zh:"筆",en:"pen"},{zh:"雨傘",en:"umbrella"},{zh:"湯匙",en:"spoon"},
+    {zh:"機器人",en:"robot"},{zh:"洋娃娃",en:"doll"},{zh:"叉子",en:"fork"},
+    {zh:"尺",en:"ruler"},{zh:"鉛筆盒",en:"pencil box"},{zh:"橡皮擦",en:"eraser"},
+    {zh:"袋子",en:"bag"},{zh:"桌子",en:"table"},{zh:"彩色筆",en:"marker"},
+    {zh:"書桌",en:"desk"},{zh:"椅子",en:"chair"},
 
-        };
+    {zh:"紅色",en:"red"},{zh:"黃色",en:"yellow"},{zh:"綠色",en:"green"},
+    {zh:"藍色",en:"blue"},{zh:"粉紅色",en:"pink"},{zh:"橘色",en:"orange"},
 
-        let words = [], index = 0, show = false, correct = 0, total = 0, grade = "k";
+    {zh:"爸爸",en:"father"},{zh:"兄弟",en:"brother"},{zh:"姐妹",en:"sister"},
+    {zh:"媽媽",en:"mother"},{zh:"爺爺",en:"grandfather"},{zh:"奶奶",en:"grandmother"},
 
-        function today() { return new Date().toISOString().slice(0, 10); }
+    {zh:"是",en:"is / are / am"},{zh:"它",en:"it"},{zh:"這",en:"this"},
+    {zh:"那",en:"that"},{zh:"有",en:"there is / are"},
+    {zh:"我的",en:"my"},{zh:"你的",en:"your"},
+    {zh:"他的",en:"his"},{zh:"她的",en:"her"},
+    {zh:"他們",en:"they"},{zh:"什麼",en:"what"},
+    {zh:"顏色",en:"color"},{zh:"一個",en:"a / an"}
+  ],
 
-        function wrongKey(w) { return "w_" + w.en; }
+  g2: [
+    {zh:"一",en:"one"},{zh:"二",en:"two"},{zh:"三",en:"three"},
+    {zh:"四",en:"four"},{zh:"五",en:"five"},{zh:"六",en:"six"},
+    {zh:"七",en:"seven"},{zh:"八",en:"eight"},{zh:"九",en:"nine"},
+    {zh:"十",en:"ten"},{zh:"十一",en:"eleven"},{zh:"十二",en:"twelve"},
+    {zh:"十三",en:"thirteen"},{zh:"十四",en:"fourteen"},{zh:"十五",en:"fifteen"},
+    {zh:"十六",en:"sixteen"},{zh:"十七",en:"seventeen"},{zh:"十八",en:"eighteen"},
+    {zh:"十九",en:"nineteen"},{zh:"二十",en:"twenty"},
+    {zh:"二十一",en:"twenty-one"},{zh:"二十二",en:"twenty-two"},
+    {zh:"二十三",en:"twenty-three"},{zh:"二十四",en:"twenty-four"},
+    {zh:"二十五",en:"twenty-five"},{zh:"二十六",en:"twenty-six"},
+    {zh:"二十七",en:"twenty-seven"},{zh:"二十八",en:"twenty-eight"},
+    {zh:"二十九",en:"twenty-nine"},{zh:"三十",en:"thirty"},
 
-        function getWrong() {
-            let arr = [];
-            let d1 = new Date(); d1.setDate(d1.getDate() - 1);
-            let d2 = new Date(); d2.setDate(d2.getDate() - 2);
+    {zh:"烏龜",en:"turtle"},{zh:"狗",en:"dog"},{zh:"貓",en:"cat"},
+    {zh:"鴨子",en:"duck"},{zh:"魚",en:"fish"},{zh:"青蛙",en:"frog"},
+    {zh:"兔子",en:"rabbit"},{zh:"松鼠",en:"squirrel"},{zh:"老虎",en:"tiger"},
+    {zh:"獅子",en:"lion"},{zh:"猴子",en:"monkey"},{zh:"大象",en:"elephant"},
+    {zh:"豬",en:"pig"},{zh:"乳牛",en:"cow"},{zh:"山羊",en:"goat"},
+    {zh:"長頸鹿",en:"giraffe"},{zh:"小鳥",en:"bird"},{zh:"熊",en:"bear"},
 
-            [d1, d2].forEach(d => {
-                let key = "wrong_" + d.toISOString().slice(0, 10);
-                let list = JSON.parse(localStorage.getItem(key) || "[]");
-                arr = arr.concat(list);
-            });
-            return arr;
-        }
+    {zh:"葡萄",en:"grapes"},{zh:"蘋果",en:"apple"},{zh:"柳丁",en:"orange"},
+    {zh:"香蕉",en:"banana"},{zh:"梨子",en:"pear"},{zh:"餅乾",en:"cookie"},
+    {zh:"紅蘿蔔",en:"carrot"},{zh:"雞蛋",en:"egg"},{zh:"檸檬",en:"lemon"},
+    {zh:"火車",en:"train"},
 
-        function weekly() {
-            let arr = [];
-            Object.keys(localStorage).forEach(k => {
-                if (k.startsWith("wrong_")) {
-                    arr = arr.concat(JSON.parse(localStorage.getItem(k)));
-                }
-            });
-            return arr;
-        }
+    {zh:"花瓶",en:"vase"},{zh:"鉛筆",en:"pencil"},{zh:"書",en:"book"},
+    {zh:"蠟筆",en:"crayon"},{zh:"筆",en:"pen"},{zh:"雨傘",en:"umbrella"},
+    {zh:"湯匙",en:"spoon"},{zh:"機器人",en:"robot"},{zh:"洋娃娃",en:"doll"},
+    {zh:"叉子",en:"fork"},{zh:"尺",en:"ruler"},{zh:"鉛筆盒",en:"pencil box"},
+    {zh:"橡皮擦",en:"eraser"},{zh:"袋子",en:"bag"},{zh:"桌子",en:"table"},
+    {zh:"彩色筆",en:"marker"},{zh:"書桌",en:"desk"},{zh:"椅子",en:"chair"},
 
-        function setGrade(g) {
-            grade = g;
-            start();
-        }
+    {zh:"星星",en:"star"},{zh:"樹",en:"tree"},
+    {zh:"鼻子",en:"nose"},{zh:"眼睛",en:"eye"},
+    {zh:"嘴巴",en:"mouth"},{zh:"耳朵",en:"ear"},
+    {zh:"照片",en:"picture"},{zh:"果醬",en:"jam"},
+    {zh:"皇后",en:"queen"},{zh:"房間",en:"room"},
 
-        function start() {
-            let base = [...data[grade]];
-            let extra = [];
+    {zh:"紅色",en:"red"},{zh:"黃色",en:"yellow"},{zh:"綠色",en:"green"},
+    {zh:"藍色",en:"blue"},{zh:"粉紅色",en:"pink"},{zh:"橘色",en:"orange"},
+    {zh:"咖啡色",en:"brown"},{zh:"白色",en:"white"},
+    {zh:"黑色",en:"black"},{zh:"紫色",en:"purple"},
 
-            if (new Date().getDay() == WEEKLY_DAY) {
-                extra = weekly();
-                document.getElementById("mode").innerText = "📅 每週複習";
-            } else {
-                extra = getWrong();
-                document.getElementById("mode").innerText = "📘 今日練習";
-            }
+    {zh:"爸爸",en:"father"},{zh:"兄弟",en:"brother"},{zh:"姐妹",en:"sister"},
+    {zh:"媽媽",en:"mother"},{zh:"爺爺",en:"grandfather"},{zh:"奶奶",en:"grandmother"},
 
-            words = base.concat(extra);
+    {zh:"是",en:"is / are / am"},{zh:"它",en:"it"},{zh:"這",en:"this"},
+    {zh:"那",en:"that"},{zh:"有",en:"there is / are"},
+    {zh:"我的",en:"my"},{zh:"你的",en:"your"},
+    {zh:"他的",en:"his"},{zh:"她的",en:"her"},
+    {zh:"他們",en:"they"},{zh:"什麼",en:"what"},
+    {zh:"顏色",en:"color"},{zh:"在裡面",en:"in"},
+    {zh:"在上面",en:"on"},{zh:"在下面",en:"under"},
+    {zh:"最喜愛的",en:"favorite"},{zh:"一個",en:"a / an"}
+  ]
+};
 
-            words = words.slice(0, 15); // 限制題數
+let grade = "k";
+let words = [];
+let index = 0;
+let showAnswer = false;
+let correctCount = 0;
+let totalCount = 0;
+let currentMode = "normal"; // normal | weekly | todayWrong
+let todayWrongWords = [];
 
-            index = 0; correct = 0; total = 0;
-            next();
-        }
+function todayString(date = new Date()) {
+  return date.toISOString().slice(0, 10);
+}
 
-        function next() {
-            if (index >= words.length) {
-                document.getElementById("card").innerText = "🎉 完成";
-                return;
-            }
-            show = false;
-            document.getElementById("card").innerText = words[index].zh;
-        }
+function dateDaysAgo(n) {
+  const d = new Date();
+  d.setDate(d.getDate() - n);
+  return todayString(d);
+}
 
-        function flip() {
-            if (index >= words.length) return;
-            show = !show;
-            document.getElementById("card").innerText = show ? words[index].en : words[index].zh;
-            if (show) speak(words[index].en);
-        }
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+}
 
-        function speak(t) {
-            let u = new SpeechSynthesisUtterance(t);
-            u.rate = 0.8;
-            speechSynthesis.speak(u);
-        }
+function dedupeWords(arr) {
+  const map = new Map();
+  arr.forEach(w => map.set(w.en + "__" + w.zh, w));
+  return Array.from(map.values());
+}
 
-        function speakCurrent() {
-            if (index < words.length) speak(words[index].en);
-        }
+function wrongStorageKey(dateStr) {
+  return "wrong_" + dateStr;
+}
 
-        function mark(ok) {
-            let w = words[index];
+function getLastTwoDaysWrongWords() {
+  const dates = [dateDaysAgo(1), dateDaysAgo(2)];
+  let arr = [];
+  dates.forEach(d => {
+    const list = JSON.parse(localStorage.getItem(wrongStorageKey(d)) || "[]");
+    arr = arr.concat(list);
+  });
+  return dedupeWords(arr);
+}
 
-            if (!ok) {
-                let key = "wrong_" + today();
-                let arr = JSON.parse(localStorage.getItem(key) || "[]");
-                arr.push(w);
-                localStorage.setItem(key, JSON.stringify(arr));
-            } else {
-                correct++;
-            }
+function getWeeklyWrongWords() {
+  let arr = [];
+  for (let i = 0; i < 7; i++) {
+    const d = dateDaysAgo(i);
+    const list = JSON.parse(localStorage.getItem(wrongStorageKey(d)) || "[]");
+    arr = arr.concat(list);
+  }
+  return dedupeWords(arr);
+}
 
-            total++;
-            document.getElementById("stats").innerText = `${correct}/${total}`;
+function isWeeklyReviewDay() {
+  return new Date().getDay() === WEEKLY_DAY;
+}
 
-            index++;
-            next();
-        }
+function setGrade(g) {
+  grade = g;
+  start();
+}
 
-        start();
-    </script>
+function makeQuestionList(sourceWords) {
+  const cloned = [...sourceWords];
+  shuffle(cloned); // 先把字庫打亂
+
+  const questionList = cloned.map(w => {
+    const askZh = Math.random() < 0.5;
+    return {
+      zh: w.zh,
+      en: w.en,
+      direction: askZh ? "zhToEn" : "enToZh"
+    };
+  });
+
+  shuffle(questionList); // 再把題目順序打亂
+  return questionList.slice(0, DAILY_LIMIT);
+}
+
+function start() {
+  currentMode = isWeeklyReviewDay() ? "weekly" : "normal";
+  todayWrongWords = [];
+
+  const base = [...data[grade]];
+  let extra = [];
+
+  if (currentMode === "weekly") {
+    extra = getWeeklyWrongWords();
+    document.getElementById("mode").innerText = "📅 今日模式：每週綜合複習";
+  } else {
+    extra = getLastTwoDaysWrongWords();
+    document.getElementById("mode").innerText = "📘 今日模式：一般練習（含前兩天錯字）";
+  }
+
+  const pool = dedupeWords(base.concat(extra));
+  shuffle(pool); // 整個題庫先亂數
+  words = makeQuestionList(pool);
+
+  index = 0;
+  showAnswer = false;
+  correctCount = 0;
+  totalCount = 0;
+  document.getElementById("message").innerText = "";
+
+  next();
+}
+
+function startTodayWrongReview() {
+  if (todayWrongWords.length === 0) {
+    document.getElementById("message").innerText = "今天還沒有錯字";
+    return;
+  }
+
+  currentMode = "todayWrong";
+  document.getElementById("mode").innerText = "🔁 今日模式：當日錯字複習";
+
+  const reviewPool = dedupeWords(todayWrongWords);
+  shuffle(reviewPool);
+  words = makeQuestionList(reviewPool);
+
+  index = 0;
+  showAnswer = false;
+  correctCount = 0;
+  totalCount = 0;
+  document.getElementById("message").innerText = "";
+
+  next();
+}
+
+function getPromptText(item) {
+  if (item.direction === "zhToEn") {
+    document.getElementById("direction").innerText = "題目方向：中文 → 英文";
+    return item.zh;
+  } else {
+    document.getElementById("direction").innerText = "題目方向：英文 → 中文";
+    return item.en;
+  }
+}
+
+function getAnswerText(item) {
+  return item.direction === "zhToEn" ? item.en : item.zh;
+}
+
+function next() {
+  if (index >= words.length) {
+    document.getElementById("word").innerText = "🎉 完成";
+    if (todayWrongWords.length > 0 && currentMode !== "todayWrong") {
+      document.getElementById("message").innerText = "可以按『今日錯字複習』再練一次";
+    } else {
+      document.getElementById("message").innerText = "今天做得很好";
+    }
+    updateStats();
+    return;
+  }
+
+  showAnswer = false;
+  document.getElementById("word").innerText = getPromptText(words[index]);
+  updateStats();
+}
+
+function flip() {
+  if (index >= words.length) return;
+
+  if (showAnswer) {
+    document.getElementById("word").innerText = getPromptText(words[index]);
+  } else {
+    document.getElementById("word").innerText = getAnswerText(words[index]);
+    speakAnswer();
+  }
+  showAnswer = !showAnswer;
+}
+
+function speak(text) {
+  window.speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = "en-US";
+  u.rate = 0.8;
+
+  const voices = speechSynthesis.getVoices();
+  const preferred =
+    voices.find(v => v.lang === "en-US" && /Samantha|Karen|Moira|Ava|Jenny|Female/i.test(v.name)) ||
+    voices.find(v => v.lang === "en-US") ||
+    voices[0];
+
+  if (preferred) u.voice = preferred;
+
+  speechSynthesis.speak(u);
+}
+
+function speakCurrent() {
+  if (index >= words.length) return;
+  speak(words[index].en);
+}
+
+function speakAnswer() {
+  if (index >= words.length) return;
+  speak(words[index].en);
+}
+
+function saveWrongToday(word) {
+  const key = wrongStorageKey(todayString());
+  const arr = JSON.parse(localStorage.getItem(key) || "[]");
+  arr.push({ zh: word.zh, en: word.en });
+  localStorage.setItem(key, JSON.stringify(arr));
+}
+
+function mark(ok) {
+  if (index >= words.length) return;
+
+  const item = words[index];
+
+  if (ok) {
+    correctCount++;
+    document.getElementById("message").innerText = "✅ 答對";
+  } else {
+    saveWrongToday(item);
+    todayWrongWords.push({ zh: item.zh, en: item.en });
+    document.getElementById("message").innerText = "❌ 這題先記下來";
+  }
+
+  totalCount++;
+  index++;
+  setTimeout(next, 250);
+}
+
+function updateStats() {
+  const done = Math.min(index, words.length);
+  document.getElementById("stats").innerText =
+    `⭐ ${correctCount} / ${totalCount}　｜　進度 ${done} / ${words.length}`;
+}
+
+start();
+</script>
 
 </body>
-
 </html>
